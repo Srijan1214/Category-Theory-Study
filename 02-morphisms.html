@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>02 — Morphisms | Learn Category Theory</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            color: #333;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+        .nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+        }
+        .nav-header h1 {
+            color: #667eea;
+            font-size: 2em;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.95em;
+            transition: background 0.3s;
+        }
+        .nav-btn:hover {
+            background: #764ba2;
+        }
+        h2 {
+            color: #667eea;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        h3 {
+            color: #764ba2;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        p {
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .diagram {
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        svg {
+            max-width: 100%;
+            height: auto;
+        }
+        .example-box {
+            background: #e8f4f8;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .example-box strong {
+            color: #667eea;
+        }
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-header">
+            <h1>02 — Morphisms and Their Properties</h1>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">Home</a>
+                <a href="03-diagrams.html" class="nav-btn">Next →</a>
+            </div>
+        </div>
+
+        <h2>Why This Matters for Functional Programming</h2>
+        <p><strong>Your functions have "types" of properties. Learning them helps you write safer code.</strong></p>
+        
+        <ul>
+            <li><strong>Isomorphisms:</strong> Two types that are "really the same." Example: `Name` as a newtype wrapper around `String` is isomorphic to `String`, but the type system treats them differently—this is type safety! You can't accidentally mix up names and passwords.</li>
+            <li><strong>Monomorphisms (injective):</strong> These functions lose NO information. If you know the output, you know exactly what the input was. This is why parsing is powerful: a parser is a mono from raw strings to your data structure. You can always verify it worked correctly.</li>
+            <li><strong>Epimorphisms (surjective):</strong> These functions cover all possibilities in the target. Pattern matching on an `Option` value uses epis—you might have a function that applies to "all possible Option outcomes." When you write exhaustive case branches, you're handling all epimorphic targets.</li>
+            <li><strong>Endomorphisms:</strong> Functions from a type to itself. These compose nicely (monoid structure). Folding a list is an endomorphism composition. Recursive functions are endomorphisms. The fact that they form a monoid means you can combine them algebraically.</li>
+        </ul>
+
+        <p><strong>Initial and Terminal Objects are the key to handling edge cases:</strong></p>
+        <ul>
+            <li><strong>Terminal object (Like `Unit` or `()`):</strong> The "void return"—the type with no information. Having exactly one function to it means every function's return can be "collapsed" to nothing. This models functions that only care about side effects.</li>
+            <li><strong>Initial object (Like `Nothing`, `None`, or `undefined`):</strong> The empty type. Functions FROM it to anywhere can handle "no value." In Haskell, this is part of how `Maybe` and `Either` work—they give you a way to indicate failure or absence.</li>
+        </ul>
+
+        <p><strong>The payoff:</strong> By understanding these morphism types, you learn to recognize patterns. "Is this function injective? Can I safely invert it?" becomes a question you can answer by looking at types, not running code.</p>
+
+        <h2>Special Types of Morphisms</h2>
+        
+        <p>Not all morphisms are equal. Some have special properties that tell us about the structure they preserve. Let's look at the main types.</p>
+
+        <h3>Isomorphism (Two-Way Invertible)</h3>
+        <p>An <strong>isomorphism</strong> <code>f : A → B</code> is a morphism that has an inverse <code>g : B → A</code> such that:</p>
+        <ul>
+            <li><code>g ∘ f = id_A</code> (going backwards then forwards gives you back what you started with)</li>
+            <li><code>f ∘ g = id_B</code> (going forwards then backwards gives you back what you started with)</li>
+        </ul>
+        <p>If such an <code>f</code> exists, we say A and B are <strong>isomorphic</strong>, written <code>A ≅ B</code>. Isomorphic objects are "the same" from a categorical perspective—they have identical structure.</p>
+
+        <p><strong>In Set:</strong> Isomorphisms are bijections (one-to-one AND onto functions). Two sets are isomorphic if they have the same cardinality (size).</p>
+        <p><strong>In Vect_k:</strong> Isomorphisms are invertible linear maps. Two vector spaces are isomorphic if they have the same dimension.</p>
+
+        <p><strong>In Functional Programming:</strong> Isomorphisms let you safely switch between representations. If you have an isomorphism between `String` and `List Char`, you can freely convert between them without losing data. This is why newtypes (wrapper types) are so useful in Haskell:</p>
+        
+        <div class="code-block">
+            <code>
+newtype UserId = UserId Int<br/>
+<br/>
+-- UserId ≅ Int (isomorphic)<br/>
+-- But type system keeps them separate for safety<br/>
+-- You can't accidentally pass a UserId where an Int is expected
+            </code>
+        </div>
+
+        <div class="diagram">
+            <svg width="500" height="160" viewBox="0 0 500 160">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#667eea" />
+                    </marker>
+                </defs>
+                <!-- Objects -->
+                <circle cx="100" cy="60" r="20" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="100" y="65" text-anchor="middle" font-size="16" font-weight="bold">A</text>
+                <text x="100" y="130" text-anchor="middle" font-size="10" fill="#333">e.g. {1,2,3}</text>
+                
+                <circle cx="400" cy="60" r="20" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="400" y="65" text-anchor="middle" font-size="16" font-weight="bold">B</text>
+                <text x="400" y="130" text-anchor="middle" font-size="10" fill="#333">e.g. {a,b,c}</text>
+                
+                <!-- Forward arrow -->
+                <line x1="120" y1="45" x2="380" y2="45" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="250" y="35" text-anchor="middle" font-size="12" fill="#667eea">f (1→a, 2→b, 3→c)</text>
+                
+                <!-- Backward arrow -->
+                <line x1="380" y1="75" x2="120" y2="75" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="250" y="95" text-anchor="middle" font-size="12" fill="#764ba2">g (a→1, b→2, c→3)</text>
+            </svg>
+        </div>
+
+        <h3>Monomorphism (Injective / One-to-One)</h3>
+        <p>A morphism <code>m : A → B</code> is a <strong>monomorphism</strong> if it is <strong>left-cancellative</strong>. This means:</p>
+        
+        <p>For any morphisms <code>f₁, f₂ : X → A</code>, if <code>m ∘ f₁ = m ∘ f₂</code> then <code>f₁ = f₂</code>.</p>
+        
+        <p><strong>Intuition:</strong> You can "cancel" m from the left. If two things give the same result after applying m, they must have been the same to begin with. This is like saying m is one-to-one (injective): different inputs give different outputs.</p>
+        
+        <p><strong>In Set:</strong> Monos are injective (one-to-one) functions. For example, f(x) = 2x is a mono from ℕ to ℕ (different natural numbers map to different even numbers), but f(x) = x mod 2 is not (both 0 and 2 map to 0).</p>
+
+        <p><strong>In Functional Programming:</strong> Monomorphisms are your "information-preserving" functions. Parsers are monos: if a parser successfully turns a string into a value, that value uniquely determines what the string was (ignoring whitespace, formatting, etc.). This is why you can reliably reverse them:</p>
+        
+        <div class="code-block">
+            <code>
+parseInt : String → Option Int    -- mono (if it parses successfully, input was uniquely an integer)<br/>
+<br/>
+-- If you know the output was 42, you know the input was some valid "42" encoding<br/>
+-- This property is why parsing/validation is safe!
+            </code>
+        </div>
+
+        <div class="diagram">
+            <svg width="550" height="200" viewBox="0 0 550 200">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#667eea" />
+                    </marker>
+                </defs>
+                <text x="275" y="20" text-anchor="middle" font-size="12" font-weight="bold" fill="#333">Monomorphism: m is injective (one-to-one)</text>
+                
+                <!-- Left case: f1 -->
+                <circle cx="80" cy="80" r="12" fill="#999" opacity="0.3" stroke="#999" stroke-width="1.5"/>
+                <text x="80" y="85" text-anchor="middle" font-size="10">X</text>
+                
+                <circle cx="150" cy="80" r="15" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="1.5"/>
+                <text x="150" y="85" text-anchor="middle" font-size="11">A</text>
+                
+                <circle cx="220" cy="80" r="15" fill="#764ba2" opacity="0.3" stroke="#764ba2" stroke-width="1.5"/>
+                <text x="220" y="85" text-anchor="middle" font-size="11">B</text>
+                
+                <line x1="92" y1="80" x2="135" y2="80" stroke="#667eea" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+                <text x="113" y="70" text-anchor="middle" font-size="9">f₁</text>
+                
+                <line x1="165" y1="80" x2="205" y2="80" stroke="#667eea" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+                <text x="192" y="70" text-anchor="middle" font-size="9">m</text>
+                
+                <!-- Annotations -->
+                <text x="275" y="60" text-anchor="middle" font-size="11" fill="#333">If m ∘ f₁ = m ∘ f₂,</text>
+                <text x="275" y="75" text-anchor="middle" font-size="11" fill="#333">then f₁ = f₂</text>
+                <text x="275" y="95" text-anchor="middle" font-size="10" fill="#666">(can't have two different paths</text>
+                <text x="275" y="108" text-anchor="middle" font-size="10" fill="#666">that both compose with m to same result)</text>
+                
+                <!-- Example -->
+                <text x="275" y="140" text-anchor="middle" font-size="11" font-weight="bold" fill="#333">Example in Set:</text>
+                <text x="275" y="158" text-anchor="middle" font-size="10" fill="#333">f(x) = 2x is injective (mono): different inputs → different outputs</text>
+                <text x="275" y="175" text-anchor="middle" font-size="10" fill="#333">f(x) = x² is NOT injective (not mono): both 2 and -2 map to 4</text>
+            </svg>
+        </div>
+
+        <h3>Epimorphism (Surjective / Onto)</h3>
+        <p>A morphism <code>e : A → B</code> is an <strong>epimorphism</strong> if it is <strong>right-cancellative</strong>. This means:</p>
+        
+        <p>For any morphisms <code>f₁, f₂ : B → X</code>, if <code>f₁ ∘ e = f₂ ∘ e</code> then <code>f₁ = f₂</code>.</p>
+        
+        <p><strong>Intuition:</strong> You can "cancel" e from the right. If applying e, then something else, gives two different results only if those two things were different. This is like saying e is onto (surjective): every element in B is "hit" by some element in A.</p>
+        
+        <p><strong>In Set:</strong> Epis are surjective (onto) functions. For example, f : ℝ → [0, ∞) where f(x) = x² is surjective (every non-negative number is a square of something), but f : ℕ → ℕ where f(x) = 2x is not (no odd numbers are hit).</p>
+
+        <p><strong>In Functional Programming:</strong> Epimorphisms are your exhaustive handlers. Pattern matching on sum types uses epis. When you write:</p>
+        
+        <div class="code-block">
+            <code>
+handle : Option Int → String<br/>
+handle Nothing = "no value"<br/>
+handle (Just x) = "got " ++ show x<br/>
+<br/>
+-- This is an epi: it "covers" all possible Option values<br/>
+-- The compiler forces you to handle both cases<br/>
+-- Missing a case is a compile error!
+            </code>
+        </div>
+
+        <div class="diagram">
+            <svg width="550" height="200" viewBox="0 0 550 200">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#667eea" />
+                    </marker>
+                </defs>
+                <text x="275" y="20" text-anchor="middle" font-size="12" font-weight="bold" fill="#333">Epimorphism: e is surjective (onto)</text>
+                
+                <!-- Path -->
+                <circle cx="80" cy="80" r="15" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="1.5"/>
+                <text x="80" y="85" text-anchor="middle" font-size="11">A</text>
+                
+                <circle cx="150" cy="80" r="15" fill="#764ba2" opacity="0.3" stroke="#764ba2" stroke-width="1.5"/>
+                <text x="150" y="85" text-anchor="middle" font-size="11">B</text>
+                
+                <circle cx="220" cy="80" r="12" fill="#999" opacity="0.3" stroke="#999" stroke-width="1.5"/>
+                <text x="220" y="85" text-anchor="middle" font-size="10">X</text>
+                
+                <line x1="95" y1="80" x2="135" y2="80" stroke="#667eea" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+                <text x="115" y="70" text-anchor="middle" font-size="9">e</text>
+                
+                <line x1="165" y1="80" x2="208" y2="80" stroke="#667eea" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+                <text x="192" y="70" text-anchor="middle" font-size="9">f₁</text>
+                
+                <!-- Annotations -->
+                <text x="275" y="60" text-anchor="middle" font-size="11" fill="#333">If f₁ ∘ e = f₂ ∘ e,</text>
+                <text x="275" y="75" text-anchor="middle" font-size="11" fill="#333">then f₁ = f₂</text>
+                <text x="275" y="95" text-anchor="middle" font-size="10" fill="#666">(e must "cover" B completely)</text>
+                <text x="275" y="108" text-anchor="middle" font-size="10" fill="#666">so it uniquely determines what comes after)</text>
+                
+                <!-- Example -->
+                <text x="275" y="140" text-anchor="middle" font-size="11" font-weight="bold" fill="#333">Example in Set:</text>
+                <text x="275" y="158" text-anchor="middle" font-size="10" fill="#333">f(x) = x² from ℝ → [0,∞) IS surjective (onto): every non-negative number is hit</text>
+                <text x="275" y="175" text-anchor="middle" font-size="10" fill="#333">f(x) = 2x from ℕ → ℕ is NOT surjective: odd numbers are never hit</text>
+            </svg>
+        </div>
+
+        <h3>Endomorphism (Arrow to Self)</h3>
+        <p>An <strong>endomorphism</strong> is simply a morphism <code>f : A → A</code> from an object to itself.</p>
+        
+        <p><strong>Key insight:</strong> The set of all endomorphisms on an object forms a <strong>monoid</strong> (structure with a binary operation and identity). You compose them: if f : A → A and g : A → A, then g ∘ f : A → A is also an endomorphism. And id_A : A → A is always an endomorphism.</p>
+        
+        <p><strong>Why this matters:</strong> Endomorphisms are important because monads are defined using endofunctors, which are endomorphisms at the level of categories.</p>
+
+        <p><strong>In Functional Programming:</strong> Endomorphisms are transformations on a value. They're your building blocks for loops, recursion, and folds. The fact that they form a monoid means:</p>
+        
+        <div class="code-block">
+            <code>
+double : Int → Int  -- endomorphism on Int<br/>
+addOne : Int → Int  -- endomorphism on Int<br/>
+<br/>
+-- Compose them:<br/>
+addOneThenDouble = double ∘ addOne : Int → Int  -- also an endomorphism<br/>
+<br/>
+-- This monoid structure is why fold works:<br/>
+-- Folding a list is just composing endomorphisms!<br/>
+-- fold: (A → A) → [A] → A   (simplification)
+            </code>
+        </div>
+
+        <div class="diagram">
+            <svg width="550" height="180" viewBox="0 0 550 180">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#667eea" />
+                    </marker>
+                </defs>
+                <text x="275" y="20" text-anchor="middle" font-size="12" font-weight="bold" fill="#333">Endomorphism: a morphism from an object to itself</text>
+                
+                <!-- Object -->
+                <circle cx="100" cy="90" r="20" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="100" y="95" text-anchor="middle" font-size="14" font-weight="bold">A</text>
+                
+                <!-- Self-loop -->
+                <path d="M 120 70 Q 150 40 120 70" fill="none" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="155" y="55" font-size="11" fill="#667eea">f : A → A</text>
+                
+                <!-- Annotation -->
+                <text x="275" y="60" text-anchor="middle" font-size="11" fill="#333">f is an endomorphism on A</text>
+                <text x="275" y="85" text-anchor="middle" font-size="10" fill="#666">Examples: rotation, reflection, squaring a number, any self-map</text>
+                
+                <!-- Composition -->
+                <text x="275" y="125" text-anchor="middle" font-size="11" font-weight="bold" fill="#333">All endomorphisms on A form a monoid:</text>
+                <text x="275" y="145" text-anchor="middle" font-size="10" fill="#666">If f, g : A → A, then g ∘ f : A → A (closed under composition)</text>
+            </svg>
+        </div>
+
+        <h2>Initial and Terminal Objects</h2>
+
+        <p><strong>These are special "universal" objects.</strong> They have a unique property: there is exactly one morphism between them and any other object. This uniqueness is what makes them powerful.</p>
+
+        <h3>Terminal Object (The "End Point")</h3>
+        <p>An object <code>1</code> (or <code>*</code>) in a category C is a <strong>terminal object</strong> if:</p>
+        <ul>
+            <li>For <strong>every</strong> object A in the category, there exists <strong>exactly one</strong> morphism <code>A → 1</code>.</li>
+        </ul>
+
+        <p><strong>Intuition:</strong> Think of 1 as a "gathering point"—everything eventually points to it, and there's only one way to do so. It's like saying "no matter what object you start with, there's a unique path to 1."</p>
+
+        <div class="example-box">
+            <strong>In Set:</strong> A terminal object is any singleton set like {*} or {42}. Why? Because for any set A, there's exactly one function from A to {*}: the function that maps every element of A to the single element *. You can't define two different functions from A to a singleton—there's only one choice.<br/><br/>
+            <strong>Example:</strong> f : {1, 2, 3} → {*} must send all three elements to *, so f(1) = *, f(2) = *, f(3) = *. There's no other function.
+        </div>
+
+        <div class="diagram">
+            <svg width="600" height="200" viewBox="0 0 600 200">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#764ba2" />
+                    </marker>
+                </defs>
+                <text x="300" y="20" text-anchor="middle" font-size="12" font-weight="bold" fill="#333">Terminal Object: Everything points to it, uniquely</text>
+                
+                <!-- Terminal object (center-right) -->
+                <circle cx="480" cy="100" r="25" fill="#764ba2" opacity="0.3" stroke="#764ba2" stroke-width="2"/>
+                <text x="480" y="110" text-anchor="middle" font-size="14" font-weight="bold">1</text>
+                
+                <!-- Other objects -->
+                <circle cx="80" cy="60" r="18" fill="#999" opacity="0.3" stroke="#999" stroke-width="2"/>
+                <text x="80" y="65" text-anchor="middle" font-size="12" font-weight="bold">A</text>
+                
+                <circle cx="80" cy="140" r="18" fill="#999" opacity="0.3" stroke="#999" stroke-width="2"/>
+                <text x="80" y="145" text-anchor="middle" font-size="12" font-weight="bold">B</text>
+                
+                <circle cx="280" cy="60" r="18" fill="#999" opacity="0.3" stroke="#999" stroke-width="2"/>
+                <text x="280" y="65" text-anchor="middle" font-size="12" font-weight="bold">C</text>
+                
+                <circle cx="280" cy="140" r="18" fill="#999" opacity="0.3" stroke="#999" stroke-width="2"/>
+                <text x="280" y="145" text-anchor="middle" font-size="12" font-weight="bold">D</text>
+                
+                <!-- Arrows pointing to terminal -->
+                <line x1="98" y1="60" x2="455" y2="90" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <line x1="98" y1="140" x2="455" y2="110" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <line x1="298" y1="60" x2="460" y2="85" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <line x1="298" y1="140" x2="460" y2="115" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)"/>
+                
+                <!-- Labels -->
+                <text x="270" y="70" text-anchor="middle" font-size="9" fill="#764ba2">unique!</text>
+                <text x="270" y="105" text-anchor="middle" font-size="9" fill="#764ba2">unique!</text>
+                <text x="65" y="95" text-anchor="middle" font-size="9" fill="#764ba2">unique!</text>
+                <text x="65" y="165" text-anchor="middle" font-size="9" fill="#764ba2">unique!</text>
+            </svg>
+        </div>
+
+        <h3>Initial Object (The "Starting Point")</h3>
+        <p>An object <code>0</code> (or ∅) in a category C is an <strong>initial object</strong> if:</p>
+        <ul>
+            <li>For <strong>every</strong> object A in the category, there exists <strong>exactly one</strong> morphism <code>0 → A</code>.</li>
+        </ul>
+
+        <p><strong>Intuition:</strong> Think of 0 as a "starting point"—you can begin from it and go uniquely to any other object. It's the dual of terminal.</p>
+
+        <div class="example-box">
+            <strong>In Set:</strong> The initial object is the empty set ∅. Why? Because there is exactly one function from ∅ to any set A: the empty function (which does nothing, sends no elements). You can't define two different empty functions—there's only one.<br/><br/>
+            <strong>Why?</strong> A function is defined by saying where it sends each element. The empty set has no elements, so any function from ∅ is completely defined by doing nothing.
+        </div>
+
+        <div class="diagram">
+            <svg width="600" height="200" viewBox="0 0 600 200">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#667eea" />
+                    </marker>
+                </defs>
+                <text x="300" y="20" text-anchor="middle" font-size="12" font-weight="bold" fill="#333">Initial Object: Everything starts from it, uniquely</text>
+                
+                <!-- Initial object (center-left) -->
+                <circle cx="60" cy="100" r="25" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="60" y="110" text-anchor="middle" font-size="14" font-weight="bold">0</text>
+                
+                <!-- Other objects -->
+                <circle cx="280" cy="60" r="18" fill="#999" opacity="0.3" stroke="#999" stroke-width="2"/>
+                <text x="280" y="65" text-anchor="middle" font-size="12" font-weight="bold">A</text>
+                
+                <circle cx="280" cy="140" r="18" fill="#999" opacity="0.3" stroke="#999" stroke-width="2"/>
+                <text x="280" y="145" text-anchor="middle" font-size="12" font-weight="bold">B</text>
+                
+                <circle cx="480" cy="60" r="18" fill="#999" opacity="0.3" stroke="#999" stroke-width="2"/>
+                <text x="480" y="65" text-anchor="middle" font-size="12" font-weight="bold">C</text>
+                
+                <circle cx="480" cy="140" r="18" fill="#999" opacity="0.3" stroke="#999" stroke-width="2"/>
+                <text x="480" y="145" text-anchor="middle" font-size="12" font-weight="bold">D</text>
+                
+                <!-- Arrows coming from initial -->
+                <line x1="85" y1="85" x2="262" y2="70" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <line x1="85" y1="115" x2="262" y2="130" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <line x1="85" y1="90" x2="462" y2="75" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <line x1="85" y1="110" x2="462" y2="125" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+                
+                <!-- Labels -->
+                <text x="170" y="65" text-anchor="middle" font-size="9" fill="#667eea">unique!</text>
+                <text x="170" y="135" text-anchor="middle" font-size="9" fill="#667eea">unique!</text>
+                <text x="270" y="85" text-anchor="middle" font-size="9" fill="#667eea">unique!</text>
+                <text x="270" y="135" text-anchor="middle" font-size="9" fill="#667eea">unique!</text>
+            </svg>
+        </div>
+
+        <h3>What to Be Careful About</h3>
+        <p>Beyond just "arrows coming out/in," here are key things to remember:</p>
+        <ul>
+            <li><strong>Uniqueness is absolute:</strong> Not just "there exists one arrow," but "there exists <strong>exactly one</strong> arrow." If you can find two different morphisms A → 1, then 1 is not terminal. Uniqueness is non-negotiable.</li>
+            <li><strong>Terminal/Initial may not exist:</strong> Not every category has a terminal or initial object. For example, the category of groups has an initial object (the trivial group), but some categories don't.</li>
+            <li><strong>Terminal/Initial are unique up to isomorphism:</strong> If two objects both satisfy the terminal property, they must be isomorphic. So "the" terminal object is unique, though there may be multiple isomorphic copies of it.</li>
+            <li><strong>They're defined by their universal property:</strong> Initial and terminal objects are characterized by having arrows to/from all other objects. This is more important than their "internal structure." Two very different-looking objects can both be terminal objects as long as they have this property.</li>
+            <li><strong>Context matters:</strong> What is terminal in Set is very different from what is terminal in Vect_k. In Vect_k, the terminal object is the one-dimensional vector space {0} (the zero vector space).</li>
+        </ul>
+
+        <h2>Commutative Diagrams</h2>
+        <p>A <strong>commutative diagram</strong> expresses the fact that all paths between two objects, with the same start and end, compose to the same morphism.</p>
+
+        <div class="example-box">
+            <strong>Example: Commutative Square</strong><br/>
+            If the square below commutes, then <code>g ∘ top = bottom ∘ f</code>, meaning both paths from A to D are equal.
+        </div>
+
+        <div class="diagram">
+            <svg width="400" height="200" viewBox="0 0 400 200">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#667eea" />
+                    </marker>
+                </defs>
+                <!-- Objects -->
+                <circle cx="80" cy="60" r="18" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="80" y="65" text-anchor="middle" font-size="14" font-weight="bold">A</text>
+                
+                <circle cx="320" cy="60" r="18" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="320" y="65" text-anchor="middle" font-size="14" font-weight="bold">B</text>
+                
+                <circle cx="80" cy="140" r="18" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="80" y="145" text-anchor="middle" font-size="14" font-weight="bold">C</text>
+                
+                <circle cx="320" cy="140" r="18" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="320" y="145" text-anchor="middle" font-size="14" font-weight="bold">D</text>
+                
+                <!-- Top arrow -->
+                <line x1="98" y1="60" x2="302" y2="60" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="200" y="50" text-anchor="middle" font-size="12" fill="#667eea">f</text>
+                
+                <!-- Right arrow -->
+                <line x1="320" y1="78" x2="320" y2="122" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="335" y="100" font-size="12" fill="#667eea">g</text>
+                
+                <!-- Bottom arrow -->
+                <line x1="302" y1="140" x2="98" y2="140" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="200" y="155" text-anchor="middle" font-size="12" fill="#764ba2">k</text>
+                
+                <!-- Left arrow -->
+                <line x1="80" y1="122" x2="80" y2="78" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="45" y="100" font-size="12" fill="#764ba2">h</text>
+                
+                <!-- Commutativity annotation -->
+                <text x="200" y="100" text-anchor="middle" font-size="11" fill="#333" font-weight="bold">Commutes if:</text>
+                <text x="200" y="115" text-anchor="middle" font-size="10" fill="#333">k ∘ f = g ∘ h</text>
+            </svg>
+        </div>
+
+        <h2>Why This Matters</h2>
+        <p>Morphisms with special properties (isos, monos, epis) tell us about the structure of a category. Initial and terminal objects are "universal" structures that appear everywhere in mathematics. Commutative diagrams become the universal language for expressing equalities in category theory—they're easier to reason about than nested function notation.</p>
+
+        <div class="nav-buttons" style="margin-top: 40px;">
+            <a href="01-intro.html" class="nav-btn">← Previous</a>
+            <a href="index.html" class="nav-btn">Home</a>
+            <a href="03-diagrams.html" class="nav-btn">Next →</a>
+        </div>
+    </div>
+</body>
+</html>

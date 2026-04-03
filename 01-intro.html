@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>01 — Intro | Learn Category Theory</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            color: #333;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+        .nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+        }
+        .nav-header h1 {
+            color: #667eea;
+            font-size: 2em;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.95em;
+            transition: background 0.3s;
+        }
+        .nav-btn:hover {
+            background: #764ba2;
+        }
+        h2 {
+            color: #667eea;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        h3 {
+            color: #764ba2;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        p {
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .code-block {
+            background: #f0f0f0;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        .code-block code {
+            background: none;
+            padding: 0;
+        }
+        .diagram {
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        svg {
+            max-width: 100%;
+            height: auto;
+        }
+        .example-box {
+            background: #e8f4f8;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .example-box strong {
+            color: #667eea;
+        }
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-header">
+            <h1>01 — What is a Category?</h1>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">Home</a>
+                <a href="02-morphisms.html" class="nav-btn">Next →</a>
+            </div>
+        </div>
+
+        <p><strong>TL;DR: Category theory is the math of composition. Your code is already categorical—you just might not have realized it!</strong></p>
+
+        <h2>Start Here: You Already Know This</h2>
+        <p><strong>Here's the intuition:</strong> A category is a way to talk about stuff and how stuff relates to other stuff.</p>
+        
+        <p>In your code, you already have categories everywhere:</p>
+        <ul>
+            <li><strong>Objects</strong> = Types (Int, String, User, Maybe Bool, List String...)</li>
+            <li><strong>Arrows</strong> = Functions (anything that goes from one type to another)</li>
+            <li><strong>Composition</strong> = When you call functions and pass the result to another function</li>
+        </ul>
+        
+        <p>A category just formalizes this. And the reason we formalize it? <strong>Because once you see the pattern, you unlock a superpower: you can reason about your code mathematically.</strong></p>
+
+        <h2>What You Need to Know About Categories</h2>
+        <p>A <strong>category</strong> has three ingredients:</p>
+        <ul>
+            <li><strong>Objects:</strong> Things we care about (types in your language)</li>
+            <li><strong>Arrows (Morphisms):</strong> Relationships between objects (functions from one type to another)</li>
+            <li><strong>A way to chain arrows together:</strong> If you have an arrow from A to B, and another from B to C, you should be able to chain them to get from A to C</li>
+        </ul>
+
+        <h2>The Two Rules (That Aren't Really Rules, Just Common Sense)</h2>
+        <p>For everything to work, we need just two properties:</p>
+        <ol>
+            <li><strong>Identity:</strong> Every type/object should have a "do nothing" function. In most languages, it's literally <code>x => x</code>.</li>
+            <li><strong>Associativity:</strong> When you chain three functions, it shouldn't matter which two you chain first. <code>(h ∘ g) ∘ f</code> should give the same result as <code>h ∘ (g ∘ f)</code>.</li>
+        </ol>
+        <p>Think about it: these are just saying "composition works the way it should." They're not surprise requirements—they're exactly how functions work in real code!</p>
+
+        <div class="diagram">
+            <svg width="500" height="120" viewBox="0 0 500 120">
+                <!-- Composition illustration -->
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#667eea" />
+                    </marker>
+                </defs>
+                <!-- Objects -->
+                <circle cx="50" cy="60" r="15" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="50" y="65" text-anchor="middle" font-size="14" font-weight="bold">A</text>
+                
+                <circle cx="200" cy="60" r="15" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="200" y="65" text-anchor="middle" font-size="14" font-weight="bold">B</text>
+                
+                <circle cx="350" cy="60" r="15" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="350" y="65" text-anchor="middle" font-size="14" font-weight="bold">C</text>
+                
+                <!-- Arrows -->
+                <line x1="65" y1="60" x2="185" y2="60" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="125" y="50" text-anchor="middle" font-size="12" fill="#667eea">f</text>
+                
+                <line x1="215" y1="60" x2="335" y2="60" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="275" y="50" text-anchor="middle" font-size="12" fill="#667eea">g</text>
+                
+                <!-- Composed arrow -->
+                <path d="M 65 85 Q 200 100 335 85" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)" fill="none" stroke-dasharray="5,5"/>
+                <text x="200" y="105" text-anchor="middle" font-size="12" fill="#764ba2">g ∘ f</text>
+            </svg>
+        </div>
+
+        <h2>Examples: Different Flavors of Categories</h2>
+
+        <h3>Example 1: Your Programming Language (The Type Category)</h3>
+        <p><strong>This is the one that matters most for you.</strong> Every time you write a function, you're working in a category.</p>
+        
+        <div class="example-box">
+            <strong>Objects:</strong> Types in your language: `Int`, `String`, `Bool`, `User`, `List Int`, `Maybe String`, etc.<br><br>
+            <strong>Arrows (Morphisms):</strong> Functions. A function `f : Int → String` is an arrow from the Int type to the String type. Pure functions always preserve this structure.<br><br>
+            <strong>Composition:</strong> When you chain functions: `getName(parseUser(jsonString))`. That's categorical composition. You composed two functions to make a bigger one.<br><br>
+            <strong>Identity:</strong> The identity function: `id x = x`. It does nothing—it's there by default.
+        </div>
+
+        <p><strong>Why this matters:</strong> You're literally building programs as paths through the type category. The fact that you can refactor `(h ∘ g) ∘ f` to `h ∘ (g ∘ f)` without changing behavior? That's the associativity law. It's not magic—it's just how functions work.</p>
+
+        <div class="code-block">
+            <code>
+-- Example in pseudocode:<br/>
+parseJSON : String → Maybe User<br/>
+getName : User → String<br/>
+exclaim : String → String<br/>
+<br/>
+-- Compose them naturally:<br/>
+shoutName = exclaim ∘ getName ∘ parseJSON<br/>
+-- Type signature: String → Maybe String<br/>
+-- This composition is mathematically guaranteed to work<br/>
+-- because we're in the type category!
+            </code>
+        </div>
+
+        <h3>Example 2: Set (The Foundation of Everything)</h3>
+        <p>Before computers, mathematicians had categories. The first one was **Set**: just sets and functions.</p>
+        
+        <div class="example-box">
+            <strong>Objects:</strong> Any set you can imagine: {red, green, blue}, {1, 2, 3, ...}, all real numbers ℝ, the power set of your favorite set, etc.<br><br>
+            <strong>Arrows:</strong> Functions between sets. If you have a function `f : A → B`, then for every element in A, there's exactly one element in B it maps to.<br><br>
+            <strong>Composition & Identity:</strong> Same as before—function composition, identity function.
+        </div>
+
+        <p><strong>Why this is foundational:</strong> Your type category is actually a special case of Set! The types in your language are sets. Functions between types are functions between sets. If you understand Set, you understand the mathematical foundation of all programming.</p>
+
+        <h3>Example 3: Vect_k (Structure That Matters: Vector Spaces)</h3>
+        <p>Sometimes you want more structure. Here's what happens when you care about that structure.</p>
+        
+        <div class="example-box">
+            <strong>Objects:</strong> Vector spaces (not just arbitrary sets, but sets with linear structure). Like ℝ², ℝ³, the space of all polynomials, etc.<br><br>
+            <strong>Arrows:</strong> **Linear maps** (functions that respect the structure). A function `f : V → W` is linear if:<br>
+            <ul style="margin-left: 50px;">
+                <li>`f(v₁ + v₂) = f(v₁) + f(v₂)` — addition is preserved</li>
+                <li>`f(c·v) = c·f(v)` — scaling is preserved</li>
+            </ul>
+            It's not *any* function—only functions that play nice with the vector structure.
+        </div>
+
+        <p><strong>The key insight:</strong> When you move to Vect_k, you **restrict** which functions are allowed. Only functions that preserve linear structure count as morphisms. This is more restrictive than Set, but more powerful because you know your functions respect the structure you care about. This is a recurring theme: stronger categories capture more specific problems.</p>
+
+        <h3>Example 4: Poset (When Things Have an Order)</h3>
+        <div class="example-box">
+            <strong>Objects:</strong> Elements in a partially ordered set. Like the numbers {1, 2, 3, 4, 5} with their usual ≤ ordering, or a hierarchy of types in your language.<br><br>
+            <strong>Arrows:</strong> There's at most *one* arrow `a → b` if `a ≤ b`, and no arrow otherwise. This might sound weird, but it captures ordering perfectly.<br><br>
+            <strong>Composition & Identity:</strong> If `a ≤ b` and `b ≤ c`, then `a ≤ c` (transitivity). The identity is reflexivity: `a ≤ a`.
+        </div>
+
+        <p><strong>Why this design trick works:</strong> We don't need "real" functions here. We just need to capture the relationship "less than or equal to." Using arrows represents that relationship. It's minimal but captures exactly what we need.</p>
+
+        <h3>Example 5: Cat (Meta—Categories as Objects)</h3>
+        <p>Want to blow your mind? Categories themselves can be objects in a category.</p>
+        
+        <div class="example-box">
+            <strong>Objects:</strong> Categories like Set, Vect_k, Poset, or any other category you've defined.<br><br>
+            <strong>Arrows:</strong> Functors (you'll learn these in Chapter 4). A functor is to categories what a function is to sets—it maps objects to objects and morphisms to morphisms while preserving structure.<br><br>
+            <strong>Composition & Identity:</strong> Functor composition, identity functor.
+        </div>
+
+        <p><strong>Why this is wild:</strong> This is self-reference at its finest. We're using category theory to study category theory. It shows the power of the abstraction—the same patterns work at every level.</p>
+
+        <h3>Poset (Partially Ordered Sets as Categories)</h3>
+        <div class="example-box">
+            <strong>What it is:</strong> A poset is a set with a partial ordering (≤). We can view any poset as a category!<br/><br/>
+            <strong>What's a partial order?</strong> A relation ≤ where:
+            <ul style="margin-left: 50px; margin-top: 10px;">
+                <li><strong>Reflexive:</strong> x ≤ x (everything relates to itself)</li>
+                <li><strong>Antisymmetric:</strong> if x ≤ y and y ≤ x, then x = y</li>
+                <li><strong>Transitive:</strong> if x ≤ y and y ≤ z, then x ≤ z</li>
+            </ul>
+            Examples: (ℕ, ≤), (ℝ, ≤), the divisibility relation on integers, the subset relation ⊆.<br/><br/>
+            <strong>Objects:</strong> Elements of the poset (e.g., if poset is {1, 2, 3} with ≤, the objects are 1, 2, 3)<br/>
+            <strong>Morphisms:</strong> For each pair x, y, there is <strong>exactly one</strong> arrow x → y <strong>if and only if</strong> x ≤ y. If x ≰ y, there is <strong>no</strong> arrow.<br/>
+            <strong>Composition:</strong> If there's an arrow x → y and an arrow y → z, then transitivity guarantees there's an arrow x → z, and composition is automatic.<br/>
+            <strong>Identity:</strong> The reflexive property ensures id_x exists (since x ≤ x).<br/><br/>
+            <strong>Concrete example:</strong> The poset {1, 2, 3} with ≤:
+            <ul style="margin-left: 50px; margin-top: 10px;">
+                <li>Arrow 1 → 2 (because 1 ≤ 2)</li>
+                <li>Arrow 2 → 3 (because 2 ≤ 3)</li>
+                <li>Arrow 1 → 3 (because 1 ≤ 3) — this is the composition of 1 → 2 → 3</li>
+                <li>No arrow 3 → 2 (because 3 ≰ 2)</li>
+            </ul>
+            <strong>Why this matters:</strong> Posets are very "thin" categories (at most one arrow between any two objects). They show that categories are very general—even abstract relations can be viewed as categories.
+        </div>
+
+        <div class="diagram">
+            <svg width="600" height="250" viewBox="0 0 600 250">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#333" />
+                    </marker>
+                </defs>
+                
+                <!-- Set example -->
+                <text x="100" y="20" text-anchor="middle" font-size="13" font-weight="bold">Set</text>
+                <circle cx="80" cy="50" r="12" fill="#667eea" opacity="0.4" stroke="#667eea" stroke-width="1.5"/>
+                <text x="80" y="55" text-anchor="middle" font-size="10">{1,2}</text>
+                <circle cx="120" cy="50" r="12" fill="#667eea" opacity="0.4" stroke="#667eea" stroke-width="1.5"/>
+                <text x="120" y="55" text-anchor="middle" font-size="9">ℝ</text>
+                <line x1="92" y1="50" x2="108" y2="50" stroke="#667eea" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+                <text x="100" y="40" text-anchor="middle" font-size="9">f</text>
+                
+                <!-- Vect_k example -->
+                <text x="100" y="120" text-anchor="middle" font-size="13" font-weight="bold">Vect_k</text>
+                <circle cx="80" cy="150" r="12" fill="#764ba2" opacity="0.4" stroke="#764ba2" stroke-width="1.5"/>
+                <text x="80" y="156" text-anchor="middle" font-size="9">ℝ²</text>
+                <circle cx="120" cy="150" r="12" fill="#764ba2" opacity="0.4" stroke="#764ba2" stroke-width="1.5"/>
+                <text x="120" y="156" text-anchor="middle" font-size="9">ℝ³</text>
+                <line x1="92" y1="150" x2="108" y2="150" stroke="#764ba2" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+                <text x="100" y="140" text-anchor="middle" font-size="9">linear</text>
+                <text x="100" y="175" text-anchor="middle" font-size="9" fill="#666">(constrained)</text>
+                
+                <!-- Poset example -->
+                <text x="350" y="20" text-anchor="middle" font-size="13" font-weight="bold">Poset: {1 ≤ 2 ≤ 3}</text>
+                <circle cx="300" cy="60" r="12" fill="#50c878" opacity="0.4" stroke="#50c878" stroke-width="1.5"/>
+                <text x="300" y="65" text-anchor="middle" font-size="10">1</text>
+                <circle cx="350" cy="60" r="12" fill="#50c878" opacity="0.4" stroke="#50c878" stroke-width="1.5"/>
+                <text x="350" y="65" text-anchor="middle" font-size="10">2</text>
+                <circle cx="400" cy="60" r="12" fill="#50c878" opacity="0.4" stroke="#50c878" stroke-width="1.5"/>
+                <text x="400" y="65" text-anchor="middle" font-size="10">3</text>
+                <line x1="312" y1="60" x2="338" y2="60" stroke="#50c878" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+                <line x1="362" y1="60" x2="388" y2="60" stroke="#50c878" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+                <path d="M 315 45 Q 350 25 385 45" stroke="#50c878" stroke-width="1.5" marker-end="url(#arrowhead)" fill="none" stroke-dasharray="3,3"/>
+                <text x="350" y="35" text-anchor="middle" font-size="9" fill="#50c878">composition</text>
+                <text x="350" y="95" text-anchor="middle" font-size="9" fill="#666">(thin: at most one arrow)</text>
+                
+                <!-- Cat example -->
+                <text x="520" y="20" text-anchor="middle" font-size="13" font-weight="bold">Cat</text>
+                <rect x="480" y="40" width="35" height="35" fill="none" stroke="#c9184a" stroke-width="1.5" rx="3"/>
+                <text x="497" y="63" text-anchor="middle" font-size="7">Set</text>
+                <rect x="525" y="40" width="35" height="35" fill="none" stroke="#c9184a" stroke-width="1.5" rx="3"/>
+                <text x="542" y="63" text-anchor="middle" font-size="7">Grp</text>
+                <line x1="515" y1="57" x2="525" y2="57" stroke="#c9184a" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+                <text x="520" y="50" text-anchor="middle" font-size="8">F</text>
+                <text x="520" y="95" text-anchor="middle" font-size="9" fill="#666">(objects are categories,</text>
+                <text x="520" y="110" text-anchor="middle" font-size="9" fill="#666">morphisms are functors)</text>
+            </svg>
+        </div>
+
+        <h2>Key Intuition</h2>
+        <p>A category is an abstract notion of "things" (objects) and "structure-preserving relationships" (morphisms) between them. The laws ensure that relationships can be chained coherently.</p>
+        <p>When Bartosz Milewski starts with "we have objects and arrows," he's describing exactly this setup. The associativity and identity laws are what make it a category.</p>
+
+        <h2>Why This Matters for Functional Programming</h2>
+        <p><strong>Programming IS category theory in disguise.</strong> This is the big insight:</p>
+        
+        <div class="example-box">
+            <strong>Types form a category:</strong> In functional programming, your types (Int, String, Bool, List, etc.) are the objects, and your functions are the morphisms. When you write a function signature <code>f : Int → String</code>, you're writing a categorical arrow. When you compose two functions, you're using categorical composition!<br/><br/>
+            <strong>Example:</strong> <code>getUserName : User → String</code> and <code>shout : String → String</code> compose to <code>shout(getUserName(user)) : User → String</code>. This is exactly categorical composition in your code.
+        </div>
+
+        <p><strong>Why this understanding changes everything:</strong></p>
+        <ul>
+            <li><strong>Composition is your primary tool.</strong> In functional programming, you don't solve problems with loops and mutable state—you solve them by composing small, pure functions. Category theory formally proves why this works and how to do it correctly.</li>
+            <li><strong>Types guarantee correctness.</strong> A function's type signature tells you what it can and cannot do. Category theory explains why types are so powerful: they're not just annotations—they're mathematical structure that your compiler can verify.</li>
+            <li><strong>Effects have structure too.</strong> Pure functions live in one "world" (the category Set). But what about side effects like I/O, error handling, or state? Category theory says: these form *different* categories! Functors let you systematically translate between worlds. This is the entire foundation of monads.</li>
+            <li><strong>Equational reasoning actually works.</strong> Because categories enforce composition and associativity, you can reason about your programs algebraically, not just by running them. "Will this function composition work?" becomes provable, not guesswork.</li>
+        </ul>
+
+        <h2>Next: Morphisms</h2>
+        <p>Now that you understand the basic structure, let's explore special types of morphisms—they're the key to writing safe, composable, maintainable code.</p>
+
+        <div class="nav-buttons" style="margin-top: 40px;">
+            <a href="index.html" class="nav-btn">Home</a>
+            <a href="02-morphisms.html" class="nav-btn">Next →</a>
+        </div>
+    </div>
+</body>
+</html>

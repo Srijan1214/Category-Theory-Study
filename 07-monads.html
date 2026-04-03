@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>07 — Monads | Learn Category Theory</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            color: #333;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+        .nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+        }
+        .nav-header h1 {
+            color: #667eea;
+            font-size: 2em;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.95em;
+            transition: background 0.3s;
+        }
+        .nav-btn:hover {
+            background: #764ba2;
+        }
+        h2 {
+            color: #667eea;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        h3 {
+            color: #764ba2;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        p {
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .code-block {
+            background: #f0f0f0;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin: 20px 0;
+            overflow-x: auto;
+            border-radius: 4px;
+        }
+        .code-block code {
+            background: none;
+            padding: 0;
+            font-size: 0.9em;
+        }
+        .diagram {
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        svg {
+            max-width: 100%;
+            height: auto;
+            margin: 10px;
+        }
+        .example-box {
+            background: #e8f4f8;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .example-box strong {
+            color: #667eea;
+        }
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-header">
+            <h1>07 — Monads</h1>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">Home</a>
+            </div>
+        </div>
+
+        <h2>Why Monads Are Transformational for Programming</h2>
+        <p><strong>This is the payoff. Monads solve one of the central problems in programming: how to compose side effects cleanly.</strong></p>
+
+        <div class="example-box">
+            <strong>The problem monad solves:</strong> In a pure functional language, functions are supposed to be side-effect-free. But real programs need to read files, make network calls, handle errors, manage state. How do you do these things while staying pure?<br/><br/>
+            <strong>The old way (before monads):</strong> You'd pass state/context through every function manually. Parse → validate → save. Each step carries forward configuration or error information. Code gets nested and hard to read.<br/><br/>
+            <strong>The monad way:</strong> Effects are first-class citizens. A `Maybe` value represents possible failure. An `Either` value represents recoverable errors. `IO` represents side effects. `State` represents mutable state. You compose them with bind (`>>=`) and they "just work."<br/><br/>
+            <strong>Why this is revolutionary:</strong> You get the benefits of pure FP (equational reasoning, easy testing, composability) while handling real-world effects naturally.
+        </div>
+
+        <p><strong>Monads unify different effects under one pattern:</strong></p>
+        <ul>
+            <li><strong>Maybe/Option:</strong> Choose between success and failure. No error message.</li>
+            <li><strong>Either/Result:</strong> Success with a value, or failure with an error message.</li>
+            <li><strong>IO:</strong> Side effects (read/write files, network, print). The type system ensures effects are explicit.</li>
+            <li><strong>Reader:</strong> Access to some read-only configuration/context throughout a computation.</li>
+            <li><strong>State:</strong> Thread mutable state through a series of operations (pure simulation of mutability).</li>
+            <li><strong>List:</strong> Non-deterministic choice. "Find all possible values" is monad composition.</li>
+        </ul>
+
+        <p><strong>The deeper insight (what Milewski teaches):</strong> All these effects share the same structure. They're all monads. Understanding monads gives you a universal lens for reasoning about effects. Once you write a monad instance for an effect, you automatically get:</p>
+        <ul>
+            <li>Composition (bind)</li>
+            <li>Sequencing (then)</li>
+            <li>Pure function lifting (return/pure)</li>
+            <li>Lawful behavior (unit, associativity laws)</li>
+        </ul>
+
+        <p><strong>How this changes your programming:</strong> Instead of writing effectful code in a special way for each effect type, you structure your code using the monad interface. Your code is uniform, composable, and testable.</p>
+
+        <h2>The Definition: Monads Officially</h2>
+        <p>A <strong>monad</strong> on a category C is a triple (T, η, μ) where:</p>
+
+        <ul>
+            <li><strong>T : C → C</strong> is an endofunctor (a functor from a category to itself).</li>
+            <li><strong>η : Id_C ⇒ T</strong> is a natural transformation from the identity functor to T (called the <strong>unit</strong> or <strong>return</strong> in programming).</li>
+            <li><strong>μ : T ∘ T ⇒ T</strong> is a natural transformation from the composition T ∘ T to T (called the <strong>multiplication</strong> or <strong>join</strong>).</li>
+        </ul>
+
+        <p>These must satisfy three laws (expressed as commutative diagrams):</p>
+
+        <h3>Law 1: Left Identity</h3>
+        <p>For every object X in C, the following square commutes:</p>
+
+        <div class="diagram">
+            <svg width="450" height="220" viewBox="0 0 450 220">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#667eea" />
+                    </marker>
+                </defs>
+                <!-- Objects -->
+                <circle cx="80" cy="60" r="20" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="80" y="65" text-anchor="middle" font-size="12" font-weight="bold">T(X)</text>
+                
+                <circle cx="370" cy="60" r="20" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="370" y="65" text-anchor="middle" font-size="12" font-weight="bold">T(T(X))</text>
+                
+                <circle cx="80" cy="160" r="20" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="80" y="165" text-anchor="middle" font-size="12" font-weight="bold">T(X)</text>
+                
+                <circle cx="370" cy="160" r="20" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="370" y="165" text-anchor="middle" font-size="12" font-weight="bold">T(X)</text>
+                
+                <!-- Arrows -->
+                <line x1="100" y1="60" x2="350" y2="60" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="225" y="45" text-anchor="middle" font-size="11" fill="#667eea">T(η_X)</text>
+                
+                <line x1="370" y1="78" x2="370" y2="142" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="390" y="110" font-size="11" fill="#667eea">μ_X</text>
+                
+                <line x1="350" y1="160" x2="100" y2="160" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="225" y="180" text-anchor="middle" font-size="11" fill="#764ba2">id_{T(X)}</text>
+                
+                <line x1="80" y1="142" x2="80" y2="78" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="40" y="110" font-size="11" fill="#764ba2">id_{T(X)}</text>
+                
+                <text x="225" y="195" text-anchor="middle" font-size="10" font-weight="bold" fill="#333">μ_X ∘ T(η_X) = id_{T(X)}</text>
+            </svg>
+        </div>
+
+        <h3>Law 2: Right Identity</h3>
+        <p>For every object X in C, the following square commutes:</p>
+
+        <div class="diagram">
+            <svg width="450" height="220" viewBox="0 0 450 220">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#667eea" />
+                    </marker>
+                </defs>
+                <!-- Objects -->
+                <circle cx="80" cy="60" r="20" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="80" y="65" text-anchor="middle" font-size="12" font-weight="bold">T(X)</text>
+                
+                <circle cx="370" cy="60" r="20" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="370" y="65" text-anchor="middle" font-size="12" font-weight="bold">T(T(X))</text>
+                
+                <circle cx="80" cy="160" r="20" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="80" y="165" text-anchor="middle" font-size="12" font-weight="bold">T(X)</text>
+                
+                <circle cx="370" cy="160" r="20" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="370" y="165" text-anchor="middle" font-size="12" font-weight="bold">T(X)</text>
+                
+                <!-- Arrows -->
+                <line x1="100" y1="60" x2="350" y2="60" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="225" y="45" text-anchor="middle" font-size="11" fill="#667eea">η_{T(X)}</text>
+                
+                <line x1="370" y1="78" x2="370" y2="142" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="390" y="110" font-size="11" fill="#667eea">μ_X</text>
+                
+                <line x1="350" y1="160" x2="100" y2="160" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="225" y="180" text-anchor="middle" font-size="11" fill="#764ba2">id_{T(X)}</text>
+                
+                <line x1="80" y1="142" x2="80" y2="78" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="40" y="110" font-size="11" fill="#764ba2">id_{T(X)}</text>
+                
+                <text x="225" y="195" text-anchor="middle" font-size="10" font-weight="bold" fill="#333">μ_X ∘ η_{T(X)} = id_{T(X)}</text>
+            </svg>
+        </div>
+
+        <h3>Law 3: Associativity</h3>
+        <p>For every object X in C, the following square commutes:</p>
+
+        <div class="diagram">
+            <svg width="500" height="220" viewBox="0 0 500 220">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#667eea" />
+                    </marker>
+                </defs>
+                <!-- Objects -->
+                <circle cx="80" cy="60" r="22" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="80" y="65" text-anchor="middle" font-size="11" font-weight="bold">T³(X)</text>
+                
+                <circle cx="420" cy="60" r="22" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="420" y="65" text-anchor="middle" font-size="11" font-weight="bold">T²(X)</text>
+                
+                <circle cx="80" cy="160" r="22" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="80" y="165" text-anchor="middle" font-size="11" font-weight="bold">T²(X)</text>
+                
+                <circle cx="420" cy="160" r="22" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="420" y="165" text-anchor="middle" font-size="11" font-weight="bold">T(X)</text>
+                
+                <!-- Arrows -->
+                <line x1="102" y1="60" x2="398" y2="60" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="250" y="45" text-anchor="middle" font-size="11" fill="#667eea">T(μ_X)</text>
+                
+                <line x1="420" y1="78" x2="420" y2="142" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="440" y="110" font-size="11" fill="#667eea">μ_X</text>
+                
+                <line x1="398" y1="160" x2="102" y2="160" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="250" y="180" text-anchor="middle" font-size="11" fill="#764ba2">μ_X</text>
+                
+                <line x1="80" y1="142" x2="80" y2="78" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="35" y="110" font-size="11" fill="#764ba2">μ_{T(X)}</text>
+                
+                <text x="250" y="200" text-anchor="middle" font-size="10" font-weight="bold" fill="#333">μ_X ∘ T(μ_X) = μ_X ∘ μ_{T(X)}</text>
+            </svg>
+        </div>
+
+        <h2>The Bind Formulation (Programming)</h2>
+        <p>In functional programming, monads are often presented differently using <strong>bind</strong> (written <code>>>=</code> in Haskell):</p>
+
+        <p>Given:</p>
+        <ul>
+            <li><strong>return : A → T(A)</strong> (corresponds to η)</li>
+            <li><strong>bind : T(A) → (A → T(B)) → T(B)</strong> (can be derived from μ)</li>
+        </ul>
+
+        <p>The laws become:</p>
+        <div class="code-block">
+            <code>
+-- Left Identity: return a >>= k ≡ k a
+left_identity : (return a >>= k) ≡ k a
+
+-- Right Identity: m >>= return ≡ m
+right_identity : (m >>= return) ≡ m
+
+-- Associativity: (m >>= k) >>= h ≡ m >>= (\x -> k x >>= h)
+associativity : ((m >>= k) >>= h) ≡ (m >>= (\x -> k x >>= h))
+            </code>
+        </div>
+
+        <p>These are the same laws, just expressed differently. The bind operation is more intuitive for programming, while η/μ is more categorical.</p>
+
+        <h2>Examples</h2>
+
+        <h3>The Maybe Monad (Handling Missing Values)</h3>
+        <div class="example-box">
+            <strong>Functor T:</strong> <code>T(X) = 1 + X</code> (either Nothing or Just x)<br/>
+            <strong>Unit η:</strong> <code>η_X(x) = Just x</code> (wrap in Just)<br/>
+            <strong>Multiplication μ:</strong> <code>μ_X(Just (Just x)) = Just x</code>, <code>μ_X(Just Nothing) = Nothing</code>, <code>μ_X(Nothing) = Nothing</code> (flatten nested Maybes)<br/><br/>
+            <strong>Use case in programming:</strong> When a value might not exist. Instead of null pointers (which crash), use Maybe. Operations short-circuit on Nothing.<br/>
+            <strong>Practical example:</strong><br/>
+            <code>
+            getUserById : Int → Maybe User<br/>
+            getAge : User → Maybe Int<br/>
+            <br/>
+            -- Compose them with bind (>>=):<br/>
+            userAge = userId >>= getUserById >>= getAge : Int → Maybe Int<br/>
+            <br/>
+            -- If any step fails (returns Nothing), the whole thing returns Nothing<br/>
+            -- No null checks needed!
+            </code>
+        </div>
+
+        <h3>The List Monad (Non-Deterministic Computation)</h3>
+        <div class="example-box">
+            <strong>Functor T:</strong> <code>T(X) = List X</code> (lists of X)<br/>
+            <strong>Unit η:</strong> <code>η_X(x) = [x]</code> (singleton list)<br/>
+            <strong>Multiplication μ:</strong> <code>μ_X(xss) = concat xss</code> (flatten a list of lists)<br/><br/>
+            <strong>Use case in programming:</strong> Non-deterministic choice. "What are all possible values?"<br/>
+            <strong>Practical example:</strong><br/>
+            <code>
+            Chess board positions : List Position<br/>
+            validMoves : Position → List Position<br/>
+            <br/>
+            -- All possible moves from all possible positions:<br/>
+            allMoves = positions >>= validMoves : List Position<br/>
+            <br/>
+            -- This "amplifies" the list through all possibilities<br/>
+            -- Monadic bind flattens the nested lists
+            </code>
+        </div>
+
+        <h3>The Reader Monad (Shared Configuration)</h3>
+        <div class="example-box">
+            <strong>Functor T:</strong> <code>T(X) = (E → X)</code> (functions from environment E to X)<br/>
+            <strong>Unit η:</strong> <code>η_X(x) = λe. x</code> (constant function)<br/>
+            <strong>Multiplication μ:</strong> <code>μ_X(f) = λe. (f e)(e)</code> (apply the function twice, threading the environment)<br/><br/>
+            <strong>Use case in programming:</strong> When your entire computation needs access to some configuration/context.<br/>
+            <strong>Practical example:</strong><br/>
+            <code>
+            type Config = { apiKey: String, dbUrl: String }<br/>
+            <br/>
+            getUser : Int → Reader Config User<br/>
+            logAction : String → Reader Config ()<br/>
+            <br/>
+            -- Both computations get Config automatically:<br/>
+            workflow = getUser 42 >>= logAction : Reader Config ()<br/>
+            <br/>
+            -- Fewer arguments being passed around!
+            </code>
+        </div>
+
+        <h2>Why This Matters for Functional Programming</h2>
+
+        <p><strong>Monads are the solution to the "effects problem" in functional programming.</strong> They are perhaps the most important abstraction you'll encounter when learning to write real programs in a pure functional language.</p>
+
+        <h3>The Problem: Purity vs. Reality</h3>
+        <p>Pure functions are beautiful:</p>
+        <ul>
+            <li>No side effects = predictable behavior</li>
+            <li>Referential transparency = easy testing and reasoning</li>
+            <li>Composable = build large programs from small pieces</li>
+        </ul>
+        <p>But real programs need effects:</p>
+        <ul>
+            <li>Reading user input (I/O effects)</li>
+            <li>Database queries (state effects)</li>
+            <li>Handling errors (exception effects)</li>
+            <li>Accessing configuration (environment effects)</li>
+            <li>Generating random numbers (randomness effects)</li>
+        </ul>
+        <p>The question: <strong>How do you write pure code that handles effects?</strong></p>
+
+        <h3>The Solution: Monads as Effect Containers</h3>
+        <p>A monad is a container that holds both a value AND information about an effect. The bind operator (>>=) lets you chain containers together, threading effects through your computation without breaking purity.</p>
+
+        <div class="code-block">
+            <code>
+-- Instead of imperative "do this side effect, then do that":<br/>
+imperative :<br/>
+  user ← fetchFromDB(42)      -- Effect: database query<br/>
+  posts ← fetchPosts(user.id) -- Effect: database query<br/>
+  print(posts)                -- Effect: I/O<br/>
+  return ()<br/>
+<br/>
+-- You write purely functional code that DESCRIBES the effects:<br/>
+functional : Reader Config (IO ()) =<br/>
+  getUser 42 >>= \user →<br/>
+    getPosts user.id >>= \posts →<br/>
+      printPosts posts<br/>
+<br/>
+-- The effects are DESCRIBED in the return type, not executed<br/>
+-- The actual execution happens later, in main()
+            </code>
+        </div>
+
+        <h3>Why This Matters: Four Pillars</h3>
+
+        <p><strong>1. Composability (The Power of >>=)</strong></p>
+        <p>Different effects compose cleanly via bind. Maybe, List, Reader, State—all can be composed the same way. This unifies code:</p>
+        <div class="code-block">
+            <code>
+-- Same composition pattern works for many different effects:<br/>
+result1 = maybeValue >>= someMaybeComputation<br/>
+result2 = listValue >>= someListComputation<br/>
+result3 = readerEnv >>= someReaderComputation<br/>
+<br/>
+-- One pattern, many purposes!
+            </code>
+        </div>
+
+        <p><strong>2. Lawfulness (Equations as Guarantees)</strong></p>
+        <p>The monad laws aren't arbitrary restrictions—they're guarantees that bind behaves predictably:</p>
+        <div class="code-block">
+            <code>
+-- If a monad follows the laws, you can REFACTOR code safely<br/>
+-- These are guaranteed to be equivalent:<br/>
+(x >>= f) >>= g  ≡  x >>= (\a → f a >>= g)<br/>
+<br/>
+-- This is algebra! You can reason about your effectful code like math.
+            </code>
+        </div>
+
+        <p><strong>3. Abstraction (No Effect Leakage)</strong></p>
+        <p>The type signature tells the whole story. A function returning <code>Maybe Int</code> promises: "This might fail." A function returning <code>Reader Config String</code> promises: "This needs configuration but no other effects." Effects are explicit, not hidden.</p>
+
+        <p><strong>4. Testability (Separate Specification from Execution)</strong></p>
+        <p>You can TEST your effectful code without actually running the effects:</p>
+        <div class="code-block">
+            <code>
+-- This describes a computation that would read a file<br/>
+-- But it doesn't actually read anything—it just returns the description<br/>
+readFileComputation : IO String = readFile "data.txt"<br/>
+<br/>
+-- Test: you can inspect what would happen<br/>
+-- You can replace "readFile" with a fake version for testing<br/>
+-- Only main() actually runs the effects
+            </code>
+        </div>
+
+        <p><strong>Summary:</strong> Monads let you write code that's both pure AND practical. Effects are structured, composable, and explicit. This is why monads became central to functional programming.</p>
+
+        <h2>Monad as a Monoid</h2>
+        <p>Recall from the previous section: a monad is a <strong>monoid in the category of endofunctors</strong>.</p>
+
+        <p>In the category [C, C] of endofunctors:</p>
+        <ul>
+            <li><strong>Objects:</strong> endofunctors T : C → C.</li>
+            <li><strong>Morphisms:</strong> natural transformations.</li>
+            <li><strong>Product:</strong> composition of functors (T ∘ S).</li>
+            <li><strong>Identity:</strong> the identity functor Id_C.</li>
+        </ul>
+
+        <p>A monad (T, η, μ) is then:</p>
+        <ul>
+            <li><strong>An object:</strong> the endofunctor T.</li>
+            <li><strong>A unit morphism:</strong> the natural transformation η : Id_C ⇒ T.</li>
+            <li><strong>A multiplication morphism:</strong> the natural transformation μ : T ∘ T ⇒ T.</li>
+        </ul>
+
+        <p>The three monad laws are precisely the monoid laws applied to this structure.</p>
+
+        <h2>Next Steps</h2>
+        <ul>
+            <li>Work through the monad laws for Maybe and List by hand.</li>
+            <li>Implement return and bind for a simple monad (e.g., Maybe or List).</li>
+            <li>Explore <strong>Kleisli categories</strong> (a monad induces a category where morphisms are Kleisli arrows).</li>
+            <li>Study <strong>adjunctions</strong> (monads arise from adjoint functors).</li>
+            <li>Read Bartosz Milewski's monad video with these notes alongside.</li>
+        </ul>
+
+        <h2>Further Reading</h2>
+        <ul>
+            <li><strong>Bartosz Milewski's Category Theory for Programmers</strong> — excellent intuitive treatment.</li>
+            <li><strong>Mac Lane, "Categories for the Working Mathematician"</strong> — the standard textbook.</li>
+            <li><strong>Awodey, "Category Theory"</strong> — modern and accessible treatment.</li>
+            <li><strong>Haskell documentation on Monad typeclass</strong> — practical examples.</li>
+        </ul>
+
+        <div class="nav-buttons" style="margin-top: 40px;">
+            <a href="06-monoids-and-categories.html" class="nav-btn">← Previous</a>
+            <a href="index.html" class="nav-btn">Home</a>
+        </div>
+    </div>
+</body>
+</html>

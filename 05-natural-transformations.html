@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>05 — Natural Transformations | Learn Category Theory</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            color: #333;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+        .nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+        }
+        .nav-header h1 {
+            color: #667eea;
+            font-size: 2em;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.95em;
+            transition: background 0.3s;
+        }
+        .nav-btn:hover {
+            background: #764ba2;
+        }
+        h2 {
+            color: #667eea;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        h3 {
+            color: #764ba2;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        p {
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .diagram {
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        svg {
+            max-width: 100%;
+            height: auto;
+        }
+        .example-box {
+            background: #e8f4f8;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .example-box strong {
+            color: #667eea;
+        }
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-header">
+            <h1>05 — Natural Transformations</h1>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">Home</a>
+                <a href="06-monoids-and-categories.html" class="nav-btn">Next →</a>
+            </div>
+        </div>
+
+        <h2>Why This Matters for Functional Programming</h2>
+        <p><strong>Polymorphic functions are natural transformations.</strong> This is a profound insight that explains why parametric polymorphism is so powerful.</p>
+
+        <div class="example-box">
+            When you write a polymorphic function like:<br/>
+            <code>
+            length : ∀ A. [A] → Int
+            </code><br/>
+            You're writing a natural transformation! For every type A, there's a component `length_A : [A] → Int`. The naturality condition ensures that this works "the same way" for all types.<br/><br/>
+            <strong>Why this is important:</strong> The compiler can verify that your functions don't "cheat." A polymorphic function can't secretly treat an `Int` differently from a `String`—the type system forces you to treat all types uniformly. This is parametric polymorphism, and it's guaranteed by naturality!
+        </div>
+
+        <p><strong>Natural transformations enable safe abstraction:</strong></p>
+        <ul>
+            <li>You can define abstract operations (map, filter, fold) that work on ANY container</li>
+            <li>The compiler proves your abstractions are "honest" (truly work for all types)</li>
+            <li>Refactoring is safe: if types still match, behavior is preserved</li>
+        </ul>
+
+        <h2>What is a Natural Transformation?</h2>
+        <p>If functors are structure-preserving maps between categories, then <strong>natural transformations</strong> are structure-preserving maps between functors.</p>
+
+        <p>Given two functors <code>F, G : C → D</code>, a <strong>natural transformation</strong> <code>α : F ⇒ G</code> assigns to every object <code>A</code> in <code>C</code> a morphism <code>α_A : F(A) → G(A)</code> in <code>D</code> (called the <strong>component at A</strong>) such that for every morphism <code>f : A → B</code> in <code>C</code>, the following square commutes:</p>
+
+        <div class="diagram">
+            <svg width="500" height="220" viewBox="0 0 500 220">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#667eea" />
+                    </marker>
+                </defs>
+                <!-- Objects -->
+                <circle cx="80" cy="60" r="18" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="80" y="65" text-anchor="middle" font-size="13" font-weight="bold">F(A)</text>
+                
+                <circle cx="420" cy="60" r="18" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="2"/>
+                <text x="420" y="65" text-anchor="middle" font-size="13" font-weight="bold">F(B)</text>
+                
+                <circle cx="80" cy="160" r="18" fill="#764ba2" opacity="0.3" stroke="#764ba2" stroke-width="2"/>
+                <text x="80" y="165" text-anchor="middle" font-size="13" font-weight="bold">G(A)</text>
+                
+                <circle cx="420" cy="160" r="18" fill="#764ba2" opacity="0.3" stroke="#764ba2" stroke-width="2"/>
+                <text x="420" y="165" text-anchor="middle" font-size="13" font-weight="bold">G(B)</text>
+                
+                <!-- Top arrow: F(f) -->
+                <line x1="98" y1="60" x2="402" y2="60" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="250" y="50" text-anchor="middle" font-size="12" fill="#667eea">F(f)</text>
+                
+                <!-- Right arrow: G(f) -->
+                <line x1="420" y1="78" x2="420" y2="142" stroke="#667eea" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="435" y="110" font-size="12" fill="#667eea">G(f)</text>
+                
+                <!-- Bottom arrow: α_B -->
+                <line x1="402" y1="160" x2="98" y2="160" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="250" y="180" text-anchor="middle" font-size="12" fill="#764ba2">α_B</text>
+                
+                <!-- Left arrow: α_A -->
+                <line x1="80" y1="142" x2="80" y2="78" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)"/>
+                <text x="45" y="110" font-size="12" fill="#764ba2">α_A</text>
+                
+                <!-- Naturality equation -->
+                <text x="250" y="210" text-anchor="middle" font-size="11" font-weight="bold" fill="#333">Naturality: α_B ∘ F(f) = G(f) ∘ α_A</text>
+            </svg>
+        </div>
+
+        <p>This square is called the <strong>naturality square</strong>. The key constraint is that the two paths from F(A) to G(B) are equal.</p>
+
+        <h2>Intuition</h2>
+        <p>A natural transformation is a way to systematically transform one functor into another that "respects" the structure of both. The naturality condition ensures the transformation works uniformly across all objects in the source category.</p>
+
+        <h2>Examples</h2>
+
+        <div class="example-box">
+            <strong>The Determinant:</strong> det : Mat_n → Group<br/>
+            For each field k, we have a functor from n×n matrices to the multiplicative group k*. The determinant is a natural transformation from matrices to their determinants.
+        </div>
+
+        <div class="example-box">
+            <strong>Fundamental Group to Singular Homology:</strong> A map from the first singular homology H₁ to the abelianization of π₁ (for path-connected spaces) is natural.
+        </div>
+
+        <div class="example-box">
+            <strong>The Diagonalization Map:</strong> For vector spaces over an algebraically closed field, the map sending a matrix to its eigenvalues is (almost) natural.
+        </div>
+
+        <h2>Natural Isomorphism</h2>
+        <p>If every component α_A is an isomorphism, then α is called a <strong>natural isomorphism</strong>, written <code>α : F ≅ G</code>. This is the strongest form of equivalence between two functors—they are "the same" up to isomorphism.</p>
+
+        <h2>The Functor Category</h2>
+        <p>Natural transformations form a category! The <strong>functor category</strong> [C, D] (think of this as the "category of all type transformations between C and D") has:</p>
+        <ul>
+            <li><strong>Objects:</strong> all functors <code>F : C → D</code>.</li>
+            <li><strong>Morphisms:</strong> natural transformations between functors.</li>
+            <li><strong>Composition:</strong> vertical composition of natural transformations (apply them one after another).</li>
+        </ul>
+
+        <h2>Vertical and Horizontal Composition</h2>
+        <p>Given natural transformations <code>α : F ⇒ G</code> and <code>β : G ⇒ H</code>, we can compose them <strong>vertically</strong> to get <code>β ∘ α : F ⇒ H</code>.</p>
+
+        <p>There is also <strong>horizontal composition</strong> between natural transformations of different functor pairs, but we'll skip the details for now—it's important for understanding some monad properties.</p>
+
+        <h2>Why Natural Transformations Matter for Monads</h2>
+        <p>Monads are defined using natural transformations! Specifically, a monad consists of:</p>
+        <ul>
+            <li>An endofunctor <code>T : C → C</code>.</li>
+            <li>A natural transformation <code>η : Id_C ⇒ T</code> (the unit).</li>
+            <li>A natural transformation <code>μ : T ∘ T ⇒ T</code> (the multiplication).</li>
+        </ul>
+
+        <p>So understanding natural transformations is essential for understanding monads.</p>
+
+        <div class="nav-buttons" style="margin-top: 40px;">
+            <a href="04-functors.html" class="nav-btn">← Previous</a>
+            <a href="index.html" class="nav-btn">Home</a>
+            <a href="06-monoids-and-categories.html" class="nav-btn">Next →</a>
+        </div>
+    </div>
+</body>
+</html>

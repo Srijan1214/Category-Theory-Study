@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>04 — Functors | Learn Category Theory</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            color: #333;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+        .nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+        }
+        .nav-header h1 {
+            color: #667eea;
+            font-size: 2em;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.95em;
+            transition: background 0.3s;
+        }
+        .nav-btn:hover {
+            background: #764ba2;
+        }
+        h2 {
+            color: #667eea;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        h3 {
+            color: #764ba2;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        p {
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .diagram {
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        svg {
+            max-width: 100%;
+            height: auto;
+        }
+        .example-box {
+            background: #e8f4f8;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .example-box strong {
+            color: #667eea;
+        }
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-header">
+            <h1>04 — Functors</h1>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">Home</a>
+                <a href="05-natural-transformations.html" class="nav-btn">Next →</a>
+            </div>
+        </div>
+
+        <h2>Why This Matters for Functional Programming</h2>
+        <p><strong>Functors let you translate between different "worlds" of computation.</strong> This is the key to handling effects and different computational models.</p>
+
+        <div class="example-box">
+            <strong>Generic types are functors:</strong> When you write `List<T>` or `Option<T>`, you're using a functor. The functor maps types to types. If you have an `Int`, the functor maps it to `List Int`. If you have a function `f : Int → String`, the functor maps it to  `List Int → List String` (via map).<br/><br/>
+            <strong>Different computational models are functors:</strong> Pure computation (Set) vs. I/O (IO type constructor) vs. stateful computation (State type constructor) are different "categories." Functors translate functions between them. This is why you can take a pure function and "lift" it into an effectful context.
+        </div>
+
+        <p><strong>How functors enable composition despite side effects:</strong></p>
+        <ul>
+            <li><strong>Without functors:</strong> Side effects break composability. A function that does I/O can't be easily composed with a pure function.</li>
+            <li><strong>With functors:</strong> The functor "lifts" pure functions into the effectful world. Now composition works again. The forgetful functor lets you go from effectful back to pure.</li>
+            <li><strong>This is where monads enter:</strong> Monads are special functors that make this lifting and composition particularly elegant.</li>
+        </ul>
+
+        <h2>Intuition First</h2>
+        <p>Think of a functor as a <strong>"translation" between categories</strong>. Just like a translator converts words from one language to another while preserving meaning, a functor maps objects and morphisms from one category to another while preserving structure. It's how you move from one mathematical "world" to another.</p>
+
+        <h2>The Formal Definition</h2>
+        <p>A <strong>functor</strong> is a structure-preserving map between categories. Formally, a <strong>covariant functor</strong> <code>F : C → D</code> consists of:</p>
+        <ul>
+            <li>For every object <code>A</code> in <code>C</code>, an object <code>F(A)</code> in <code>D</code>.</li>
+            <li>For every morphism <code>f : A → B</code> in <code>C</code>, a morphism <code>F(f) : F(A) → F(B)</code> in <code>D</code>.</li>
+        </ul>
+
+        <p><strong>Structure preservation rules:</strong></p>
+        <ul>
+            <li><strong>Composition preservation:</strong> <code>F(g ∘ f) = F(g) ∘ F(f)</code> — if two morphisms compose in C, their images compose in D the same way.</li>
+            <li><strong>Identity preservation:</strong> <code>F(id_A) = id_{F(A)}</code> — identity morphisms map to identity morphisms.</li>
+        </ul>
+
+        <p><strong>Why these rules matter:</strong> Without them, the functor would scramble the structure it's supposed to translate. These rules guarantee that paths through C map to equivalent paths through D.</p>
+
+        <h2>Examples</h2>
+
+        <div class="example-box">
+            <strong>The Forgetful Functor:</strong> U : Vect_k → Set<br/>
+            Forgets that a vector space has extra structure and treats it as just a set. The functor maps each vector space V to its underlying set, and each linear map f to the same function (viewed as a set function).
+        </div>
+
+        <div class="example-box">
+            <strong>The Fundamental Group:</strong> π₁ : Top* → Grp<br/>
+            Maps pointed topological spaces to groups (the fundamental group at the base point) and continuous maps to group homomorphisms.
+        </div>
+
+        <div class="example-box">
+            <strong>The Powerset Functor:</strong> P : Set → Set<br/>
+            Maps each set X to its powerset P(X) (the set of all subsets). For a function f : X → Y, it sends each subset S ⊆ X to its image P(f)(S) = {f(x) | x ∈ S}.
+        </div>
+
+        <div class="example-box">
+            <strong>Homology:</strong> H_n : Top → Ab (abelian groups)<br/>
+            Maps topological spaces to their n-th homology groups.
+        </div>
+
+        <h2>Composition of Functors</h2>
+        <p>Functors can be composed. If <code>F : C → D</code> and <code>G : D → E</code>, then their composition <code>G ∘ F : C → E</code> is defined by:</p>
+        <ul>
+            <li><code>(G ∘ F)(A) = G(F(A))</code></li>
+            <li><code>(G ∘ F)(f) = G(F(f))</code></li>
+        </ul>
+
+        <div class="diagram">
+            <svg width="600" height="200" viewBox="0 0 600 200">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#667eea" />
+                    </marker>
+                </defs>
+                <!-- Category boxes -->
+                <rect x="20" y="30" width="120" height="140" fill="none" stroke="#667eea" stroke-width="2" rx="5"/>
+                <text x="80" y="55" text-anchor="middle" font-size="13" font-weight="bold">Category C</text>
+                <circle cx="50" cy="100" r="10" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="1.5"/>
+                <text x="50" y="105" text-anchor="middle" font-size="10">A</text>
+                <circle cx="110" cy="100" r="10" fill="#667eea" opacity="0.3" stroke="#667eea" stroke-width="1.5"/>
+                <text x="110" y="105" text-anchor="middle" font-size="10">B</text>
+                <line x1="60" y1="100" x2="100" y2="100" stroke="#667eea" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+                <text x="80" y="95" text-anchor="middle" font-size="9">f</text>
+                
+                <rect x="220" y="30" width="120" height="140" fill="none" stroke="#764ba2" stroke-width="2" rx="5"/>
+                <text x="280" y="55" text-anchor="middle" font-size="13" font-weight="bold">Category D</text>
+                <circle cx="250" cy="100" r="10" fill="#764ba2" opacity="0.3" stroke="#764ba2" stroke-width="1.5"/>
+                <text x="250" y="105" text-anchor="middle" font-size="10">F(A)</text>
+                <circle cx="310" cy="100" r="10" fill="#764ba2" opacity="0.3" stroke="#764ba2" stroke-width="1.5"/>
+                <text x="310" y="105" text-anchor="middle" font-size="10">F(B)</text>
+                <line x1="260" y1="100" x2="300" y2="100" stroke="#764ba2" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+                <text x="280" y="95" text-anchor="middle" font-size="9">F(f)</text>
+                
+                <rect x="420" y="30" width="120" height="140" fill="none" stroke="#c9184a" stroke-width="2" rx="5"/>
+                <text x="480" y="55" text-anchor="middle" font-size="13" font-weight="bold">Category E</text>
+                <circle cx="450" cy="100" r="10" fill="#c9184a" opacity="0.3" stroke="#c9184a" stroke-width="1.5"/>
+                <text x="450" y="105" text-anchor="middle" font-size="10">G(F(A))</text>
+                <circle cx="510" cy="100" r="10" fill="#c9184a" opacity="0.3" stroke="#c9184a" stroke-width="1.5"/>
+                <text x="510" y="105" text-anchor="middle" font-size="10">G(F(B))</text>
+                <line x1="460" y1="100" x2="500" y2="100" stroke="#c9184a" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+                <text x="480" y="95" text-anchor="middle" font-size="9">G(F(f))</text>
+                
+                <!-- Functor arrows -->
+                <line x1="140" y1="100" x2="220" y2="100" stroke="#667eea" stroke-width="2.5" marker-end="url(#arrowhead)"/>
+                <text x="180" y="90" text-anchor="middle" font-size="11" fill="#667eea" font-weight="bold">F</text>
+                
+                <line x1="340" y1="100" x2="420" y2="100" stroke="#764ba2" stroke-width="2.5" marker-end="url(#arrowhead)"/>
+                <text x="380" y="90" text-anchor="middle" font-size="11" fill="#764ba2" font-weight="bold">G</text>
+            </svg>
+        </div>
+
+        <h2>Special Types of Functors</h2>
+
+        <h3>Faithful Functor</h3>
+        <p>A functor <code>F : C → D</code> is <strong>faithful</strong> if it is injective on morphisms: whenever <code>F(f) = F(g)</code>, we have <code>f = g</code>. This means the functor doesn't collapse distinct morphisms.</p>
+
+        <h3>Full Functor</h3>
+        <p>A functor <code>F : C → D</code> is <strong>full</strong> if it is surjective on morphisms: for every pair of objects A, B in C and every morphism <code>h : F(A) → F(B)</code> in D, there exists a morphism <code>f : A → B</code> in C such that <code>F(f) = h</code>.</p>
+
+        <h3>Fully Faithful Functor</h3>
+        <p>A functor that is both full and faithful. This is a very strong form of "sameness" between categories.</p>
+
+        <h3>Equivalence of Categories</h3>
+        <p>Two categories C and D are <strong>equivalent</strong> if there exist functors <code>F : C → D</code> and <code>G : D → C</code> such that <code>G ∘ F ≅ Id_C</code> and <code>F ∘ G ≅ Id_D</code> (up to natural isomorphism). Equivalent categories are "essentially the same" even if not identical.</p>
+
+        <h2>Why Functors Matter</h2>
+        <p>Functors allow us to:</p>
+        <ul>
+            <li>Translate problems from one category to another.</li>
+            <li>Compare different mathematical structures.</li>
+            <li>Extract essential information while forgetting irrelevant details.</li>
+            <li>Build larger categories from smaller ones.</li>
+        </ul>
+
+        <div class="nav-buttons" style="margin-top: 40px;">
+            <a href="03-diagrams.html" class="nav-btn">← Previous</a>
+            <a href="index.html" class="nav-btn">Home</a>
+            <a href="05-natural-transformations.html" class="nav-btn">Next →</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>06 — Monoids & Categories | Learn Category Theory</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            color: #333;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+        .nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+        }
+        .nav-header h1 {
+            color: #667eea;
+            font-size: 2em;
+        }
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .nav-btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.95em;
+            transition: background 0.3s;
+        }
+        .nav-btn:hover {
+            background: #764ba2;
+        }
+        h2 {
+            color: #667eea;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        h3 {
+            color: #764ba2;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        p {
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .diagram {
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        svg {
+            max-width: 100%;
+            height: auto;
+        }
+        .example-box {
+            background: #e8f4f8;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .example-box strong {
+            color: #667eea;
+        }
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+        li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-header">
+            <h1>06 — Monoids and Categories</h1>
+            <div class="nav-buttons">
+                <a href="index.html" class="nav-btn">Home</a>
+                <a href="07-monads.html" class="nav-btn">Next →</a>
+            </div>
+        </div>
+
+        <h2>Why This Matters for Functional Programming</h2>
+        <p><strong>Understanding monoids is the key to understanding how values combine and fold.</strong> This is critical for practical FP.</p>
+
+        <div class="example-box">
+            <strong>Monoids model composable operations:</strong> Any time you can combine two values into one (addition, string concatenation, list merging), you have a monoid structure. Functional languages exploit this heavily.<br/><br/>
+            <strong>Example:</strong> Summing a list is monoid action (0 is the identity, + is associative). Folding a tree is monoid action. Reducing/aggregating in MapReduce is monoid action. All of these are instances of the same abstract pattern!
+        </div>
+
+        <p><strong>Why endomorphism monoids matter for monads:</strong></p>
+        <ul>
+            <li>Every monad is secretly a monoid in the category of endofunctors</li>
+            <li>Understanding monoids helps you understand how monads compose</li>
+            <li>The unit/multiplication of a monad follow monoid laws</li>
+            <li>This explains why monad laws are what they are</li>
+        </ul>
+
+        <p><strong>Practical consequence:</strong> When you understand that `>>=` (bind) is just monoid multiplication for effects, you understand why monads work the way they do. Effects compose just like values in a monoid!</p>
+
+        <h2>What is a Monoid?</h2>
+        <p>A <strong>monoid</strong> (M, ⋆, e) is a set M equipped with:</p>
+        <ul>
+            <li>A binary operation <code>⋆ : M × M → M</code> (called composition or multiplication).</li>
+            <li>An identity element <code>e ∈ M</code>.</li>
+        </ul>
+
+        <p>These must satisfy:</p>
+        <ul>
+            <li><strong>Associativity:</strong> <code>(a ⋆ b) ⋆ c = a ⋆ (b ⋆ c)</code> for all a, b, c ∈ M.</li>
+            <li><strong>Identity:</strong> <code>e ⋆ a = a = a ⋆ e</code> for all a ∈ M.</li>
+        </ul>
+
+        <h2>Monoid Examples</h2>
+
+        <div class="example-box">
+            <strong>Integers under addition (ℤ, +, 0):</strong> Any integer can be added to any other, and 0 is the identity.
+        </div>
+
+        <div class="example-box">
+            <strong>Strings under concatenation (Σ*, ++, ""):</strong> Strings form a monoid where ++ is concatenation and "" is the empty string.
+        </div>
+
+        <div class="example-box">
+            <strong>Functions under composition:</strong> All functions X → X form a monoid under composition, with the identity function as the unit.
+        </div>
+
+        <h2>Monoid as a Category</h2>
+        <p>Here's the key insight: <strong>any monoid can be viewed as a category with a single object</strong>.</p>
+
+        <p>Given a monoid (M, ⋆, e), construct a category C with:</p>
+        <ul>
+            <li><strong>One object:</strong> Call it •.</li>
+            <li><strong>Morphisms:</strong> <code>Hom(•, •) = M</code> (the elements of M are morphisms from • to itself).</li>
+            <li><strong>Composition:</strong> For morphisms m₁, m₂ ∈ M, their composition is <code>m₂ ∘ m₁ = m₂ ⋆ m₁</code>.</li>
+            <li><strong>Identity:</strong> The identity morphism <code>id_• = e</code>.</li>
+        </ul>
+
+        <p>The monoid laws (associativity and identity) ensure this forms a valid category.</p>
+
+        <div class="diagram">
+            <svg width="600" height="200" viewBox="0 0 600 200">
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#667eea" />
+                    </marker>
+                </defs>
+                <!-- Left side: Monoid picture -->
+                <text x="100" y="30" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">Monoid Viewpoint</text>
+                
+                <rect x="30" y="60" width="140" height="100" fill="none" stroke="#667eea" stroke-width="2" rx="5"/>
+                <text x="100" y="85" text-anchor="middle" font-size="11">Set M = {e, a, b, c, ...}</text>
+                <text x="100" y="105" text-anchor="middle" font-size="11">Operation: ⋆</text>
+                <text x="100" y="125" text-anchor="middle" font-size="11">Example: ℤ with +</text>
+                <text x="100" y="145" text-anchor="middle" font-size="11">Unit: e (identity)</text>
+                
+                <!-- Arrow -->
+                <line x1="170" y1="110" x2="230" y2="110" stroke="#667eea" stroke-width="2.5" marker-end="url(#arrowhead)"/>
+                <text x="200" y="100" text-anchor="middle" font-size="11" fill="#667eea" font-weight="bold">View as</text>
+                
+                <!-- Right side: Category picture -->
+                <text x="430" y="30" text-anchor="middle" font-size="13" font-weight="bold" fill="#333">Category Viewpoint</text>
+                
+                <rect x="320" y="60" width="220" height="100" fill="none" stroke="#764ba2" stroke-width="2" rx="5"/>
+                <text x="430" y="85" text-anchor="middle" font-size="11">One object: •</text>
+                <text x="430" y="105" text-anchor="middle" font-size="11">Morphisms • → • are elements of M</text>
+                <text x="430" y="125" text-anchor="middle" font-size="11">Composition of morphisms = ⋆</text>
+                <text x="430" y="145" text-anchor="middle" font-size="11">Identity morphism = e</text>
+            </svg>
+        </div>
+
+        <h2>Endomorphisms as a Monoid</h2>
+        <p>Conversely, if we have a category C with an object A, the set of all endomorphisms <code>End(A) = Hom(A, A)</code> (any morphism from an object to itself) forms a monoid under composition:</p>
+        <ul>
+            <li><strong>Operation:</strong> composition of morphisms.</li>
+            <li><strong>Unit:</strong> the identity morphism <code>id_A</code>.</li>
+        </ul>
+
+        <p>This is always a monoid because:</p>
+        <ul>
+            <li>Composition is associative (by the category axioms).</li>
+            <li><code>id_A</code> is a left and right identity (by the category axioms).</li>
+        </ul>
+
+        <h2>Example: Endomorphisms of a Vector Space</h2>
+
+        <div class="example-box">
+            <strong>Linear endomorphisms:</strong> Let V be a vector space. The set of linear maps V → V forms a monoid under composition. This is actually a ring (since we also have pointwise addition), but forgetting addition, it's a monoid. Matrix multiplication is a concrete example when V = ℝⁿ.
+        </div>
+
+        <h2>Why This Matters for Monads</h2>
+        <p>The deep categorical insight is this: just as a monoid is a category with one object, <strong>a monad is a monoid in the category of endofunctors</strong>.</p>
+
+        <p>Specifically:</p>
+        <ul>
+            <li>The "category" is now the category of endofunctors on C (denoted [C, C]).</li>
+            <li>The "objects" are endofunctors T : C → C.</li>
+            <li>The "morphisms" are natural transformations between endofunctors.</li>
+            <li>The "product" is functor composition.</li>
+            <li>A "monoid" in this category is a triple (T, η, μ) where:</li>
+            <ul>
+                <li>T is the "object" (an endofunctor).</li>
+                <li>η : Id ⇒ T is the "identity morphism" (unit natural transformation).</li>
+                <li>μ : T ∘ T ⇒ T is the "multiplication" (multiplication natural transformation).</li>
+            </ul>
+        </ul>
+
+        <p>This perspective unifies monoids and monads: both are monoids in some category, just at different levels of abstraction.</p>
+
+        <div class="nav-buttons" style="margin-top: 40px;">
+            <a href="05-natural-transformations.html" class="nav-btn">← Previous</a>
+            <a href="index.html" class="nav-btn">Home</a>
+            <a href="07-monads.html" class="nav-btn">Next →</a>
+        </div>
+    </div>
+</body>
+</html>
