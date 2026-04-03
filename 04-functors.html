@@ -133,6 +133,24 @@
             <li><strong>This is where monads enter:</strong> Monads are special functors that make this lifting and composition particularly elegant.</li>
         </ul>
 
+        <h3>Endofunctors: The Workhorses of Functional Programming</h3>
+        <p><strong>Here's a critical insight for everyday FP:</strong> A functor maps from a category C to a category D: <code>F : C → D</code>. But C and D can be the <strong>same category!</strong> When they are, it's called an <strong>endofunctor</strong>.</p>
+
+        <div class="example-box">
+            <strong>In the Type Category, almost everything is an endofunctor:</strong><br/><br/>
+            <code>List : Type → Type</code> (maps types to types, stays in Type category)<br/>
+            <code>Maybe : Type → Type</code><br/>
+            <code>Option : Type → Type</code><br/>
+            <code>IO : Type → Type</code><br/>
+            <code>Reader : Type → Type</code><br/>
+            <code>State : Type → Type</code><br/><br/>
+            All of these are endofunctors. They never leave the Type category. A function `f : Int → String` gets lifted to `List f : List Int → List String` (via `map`), but everything stays within types and functions.
+        </div>
+
+        <p><strong>Why this matters:</strong> In practical functional programming, you almost always work with endofunctors. You live in the Type category, and operations like `List`, `Maybe`, `IO` are endofunctors within that single category. This is what makes FP so elegant—it's one coherent categorical structure. Monads (which you'll see in Chapter 7) are endofunctors with special structure.</p>
+
+        <p><strong>Compare to theoretical functors:</strong> A functor between different categories (like the Forgetful functor: Vect_k → Set) is more theoretical. In real code, you're almost always doing endofunctor operations.</p>
+
         <h2>Intuition First</h2>
         <p>Think of a functor as a <strong>"translation" between categories</strong>. Just like a translator converts words from one language to another while preserving meaning, a functor maps objects and morphisms from one category to another while preserving structure. It's how you move from one mathematical "world" to another.</p>
 
@@ -152,6 +170,24 @@
         <p><strong>Why these rules matter:</strong> Without them, the functor would scramble the structure it's supposed to translate. These rules guarantee that paths through C map to equivalent paths through D.</p>
 
         <h2>Examples</h2>
+
+        <h3>Endofunctors (The Practical Case — Stay in the Same Category)</h3>
+
+        <div class="example-box">
+            <strong>Type Constructors in the Type Category:</strong> <code>List : Type → Type</code>, <code>Maybe : Type → Type</code>, <code>IO : Type → Type</code><br/><br/>
+            These are endofunctors. They map types to types and functions to functions, all within the Type category. Examples:<br/>
+            - <code>List</code> maps `Int` → `List Int` and `f : String → Bool` → `map f : List String → List Bool`<br/>
+            - <code>Maybe</code> maps `Int` → `Maybe Int` and `f : String → Bool` → `map f : Maybe String → Maybe Bool`<br/>
+            - <code>IO</code> maps `Int` → `IO Int` and `f : String → Bool` → `map f : IO String → IO Bool`<br/><br/>
+            <strong>This is what you use every day in functional programming.</strong> Everything stays in the Type category.
+        </div>
+
+        <div class="example-box">
+            <strong>The Powerset Functor:</strong> P : Set → Set<br/>
+            Another endofunctor. Maps each set X to its powerset P(X) (the set of all subsets). For a function f : X → Y, it sends each subset S ⊆ X to its image P(f)(S) = {f(x) | x ∈ S}.
+        </div>
+
+        <h3>Functors Between Different Categories</h3>
 
         <div class="example-box">
             <strong>The Forgetful Functor:</strong> U : Vect_k → Set<br/>
