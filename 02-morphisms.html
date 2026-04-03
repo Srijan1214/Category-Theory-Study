@@ -312,6 +312,36 @@ handle (Just x) = "got " ++ show x<br/>
         <p>An <strong>endomorphism</strong> is simply a morphism <code>f : A → A</code> from an object to itself.</p>
         
         <p><strong>Key insight:</strong> The set of all endomorphisms on an object forms a <strong>monoid</strong> (structure with a binary operation and identity). You compose them: if f : A → A and g : A → A, then g ∘ f : A → A is also an endomorphism. And id_A : A → A is always an endomorphism.</p>
+
+        <h4>Identity Morphism vs. Other Endomorphisms</h4>
+        <p>Remember from Chapter 1: every object must have an identity morphism. But an endomorphism is ANY morphism from an object to itself. So:</p>
+        <ul>
+            <li><strong>Identity morphism `id_A`:</strong> Does nothing: `f ∘ id_A = f` for all f. There's exactly one per object.</li>
+            <li><strong>Other endomorphisms:</strong> There can be many. They have different composition behaviors.</li>
+        </ul>
+
+        <p><strong>Concrete example in the Type category (from Chapter 1):</strong> Let's look at the type `Int`:</p>
+
+        <div class="code-block">
+            <code>
+-- Identity endomorphism on Int:<br/>
+id : Int → Int = λx. x<br/>
+<br/>
+-- Other endomorphisms on Int (many of them!):<br/>
+double : Int → Int = λx. 2x<br/>
+addOne : Int → Int = λx. x + 1<br/>
+<br/>
+-- Importantly: they compose DIFFERENTLY when order changes!<br/>
+(double ∘ addOne) 5 = double(addOne(5)) = double(6) = 12<br/>
+(addOne ∘ double) 5 = addOne(double(5)) = addOne(10) = 11<br/>
+<br/>
+-- These are NOT the same! Order of composition matters.<br/>
+-- In category theory, this is why different endomorphisms are distinguished:<br/>
+-- by their composition behavior, not by their "internal effect"
+            </code>
+        </div>
+
+        <p><strong>The abstract insight:</strong> In category theory, we don't care what's "inside" Int. We only know Int through its morphisms. Different endomorphisms on Int are different precisely because they compose with other morphisms in different ways. That's how the abstract category distinguishes them.</p>
         
         <p><strong>Why this matters:</strong> Endomorphisms are important because monads are defined using endofunctors, which are endomorphisms at the level of categories.</p>
 
